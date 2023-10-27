@@ -1,3 +1,4 @@
+#!/usr/bin/env zsh
 # TODO:
 # - [x] Asynchronous execution
 #   - [ ] Properly refresh terminal - might just not work with warp?
