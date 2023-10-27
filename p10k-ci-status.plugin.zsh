@@ -83,6 +83,8 @@ function prompt_ci_status() {
     [[ $? != 0 || -z $repo_root ]] && return
 
     local repo_branch="$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
+    [[ $? != 0 || -z $repo_branch ]] && return
+
     async_job _p10k_ci_status_worker _ci_status $repo_root $repo_branch
 
     local state="$_P9K_CI_STATUS_STATE[${repo_root}@${repo_branch}]"
