@@ -10,7 +10,7 @@ function prompt_ci_status() {
     local output exit_code
     local CHECK='✔︎' CROSS='✖︎' BULLET='•' TRIANGLE='▴'
     
-    output="$(hub ci-status)"
+    output="$(hub ci-status 2> /dev/null)"
     exit_code=$?
 
     case $exit_code in
