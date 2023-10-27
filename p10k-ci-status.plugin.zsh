@@ -1,52 +1,107 @@
 # TODO:
-# - [ ] Asynchronous execution
+# - [x] Asynchronous execution
+#   - [ ] Properly refresh terminal - might just not work with warp?
+#   - [ ] Support all states
+#   - [ ] Prompt updating
+#   - [x] Proper caching per repo & branch
 # - [ ] Fall-back: hub ci-status $(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
 # - [ ] Allow configuration
 # - [ ] Add a readme
 #
 
-function prompt_ci_status() {
-    local state color='' text=''
-    local output exit_code
-    local CHECK='✔︎' CROSS='✖︎' BULLET='•' TRIANGLE='▴'
-    
-    output="$(hub ci-status 2> /dev/null)"
-    exit_code=$?
+function _ci_status() {
+    local hub_output hub_exit_code state
+    local repo_root="$1"
+    local repo_branch="$2"
 
-    case $exit_code in
+    hub_output="$(cd $repo_root; hub ci-status 2> /dev/null)"
+    hub_exit_code=$?
+
+    state=UNKNOWN
+    case $hub_exit_code in
         0)
-            text="$CHECK"
-            if [[ $output == "neutral" ]]; then
+            if [[ $hub_output == "neutral" ]]; then
                 state=NEUTRAL
-                color=gray
             else
                 state=SUCCESS
-                color=green
             fi
             ;;
         1)
-            text="$CROSS"
-            if [[ $output == "action_required" ]]; then
+            if [[ $hub_output == "action_required" ]]; then
                 state=ACTION_REQUIRED
-                text="$TRIANGLE"
-                color=red
-            elif [[ $output == "cancelled" || $output == "timed_out" ]]; then
+            elif [[ $hub_output == "cancelled" || $hub_output == "timed_out" ]]; then
                 state=CANCELLED
-                color=yellow
-            elif [[ $output == "failure" || $output == "error" ]]; then
+            elif [[ $hub_output == "failure" || $hub_output == "error" ]]; then
                 state=FAILURE
-                color=red
+            elif [[ $hub_output == "" ]]; then
+                state=UNAVAILABLE
             fi
             ;;
         2)
             state=BUILDING
-            text="$BULLET"
-            color=yellow
             ;;
         3)
             state=NO_STATUS
             ;;
     esac
 
-    p10k segment -s $state -f $color -t $text
+    echo "${repo_root}@${repo_branch}"
+    echo $state
+}
+
+function _ci_status_callback() {
+    local working_directory
+    local ci_status
+    local return_values=(${(f)3})
+    _P9K_CI_STATUS_STATE[$return_values[1]]=$return_values[2]
+}
+
+typeset -g -A _P9K_CI_STATUS_STATE
+
+async_init
+async_stop_worker _p10k_ci_status_worker
+async_start_worker _p10k_ci_status_worker -n
+async_unregister_callback _p10k_ci_status_worker
+async_register_callback _p10k_ci_status_worker _ci_status_callback
+
+function prompt_ci_status() {
+    (( $+commands[hub] )) || return
+
+    local repo_root="$(git rev-parse --show-toplevel)"
+    local repo_branch="$(git rev-parse --abbrev-ref HEAD)"
+    async_job _p10k_ci_status_worker _ci_status $repo_root $repo_branch
+
+    local state="$_P9K_CI_STATUS_STATE[${repo_root}@${repo_branch}]"
+    local icon foreground
+
+    case $state in
+        "SUCCESS")
+            icon='✔︎'
+            foreground=green
+            ;;
+        "FAILURE")
+            icon='✖︎'
+            foreground=red
+            ;;
+        "BUILDING")
+            icon='•'
+            foreground=yellow
+            ;;
+        "ACTION_REQUIRED")
+            icon='▴'
+            foreground=red
+            ;;
+        "CANCELLED")
+            icon='✖︎'
+            foreground=yellow
+            ;;
+        "NEUTRAL")
+            icon='✔︎'
+            foreground=blue
+            ;;
+    esac
+
+    if [ ! -z $icon ]; then
+        p10k segment -s $state -i $icon -f $foreground -t $icon
+    fi
 }
