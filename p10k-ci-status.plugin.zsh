@@ -127,7 +127,5 @@ function prompt_ci_status() {
         foreground='%F{242}'
     fi
 
-    if [ ! -z $icon ]; then
-        p10k segment -s $state -i $icon -f $foreground -t $icon
-    fi
+    p10k segment -s $state -i $icon -f $foreground -e -c $icon -t $icon
 }
