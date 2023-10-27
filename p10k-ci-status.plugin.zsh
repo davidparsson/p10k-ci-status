@@ -1,14 +1,19 @@
 #!/usr/bin/env zsh
 # TODO:
 # - [x] Asynchronous execution
-#   - [ ] Properly refresh terminal - might just not work with warp?
+#   - [ ] Properly refresh terminal
 #   - [ ] Support all states
 #   - [ ] Prompt updating
 #   - [x] Proper caching per repo & branch
+#   - [ ] Check commit instead of branch?
 # - [x] Fall-back: hub ci-status $(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
 #   - [ ] Better colors
 # - [ ] Allow configuration
 # - [ ] Add a readme
+# - [ ] Optimizations:
+#   - [ ] Add a timeout to not check to often
+#   - [ ] Only update when state changes
+#   - [ ] Prevent memory leaks in arrays
 #
 
 function _ci_status() {
