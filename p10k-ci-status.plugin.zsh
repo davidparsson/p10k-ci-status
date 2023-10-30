@@ -28,7 +28,7 @@ function _ci_status_compute() {
 function _ci_status_async() {
     local hub_output hub_exit_code state
     local repo_root="$1"
-    local repo_branch="$2"
+    local repo_commit="$2"
     local upstream='0'
 
     hub_output="$(cd $repo_root; hub ci-status 2> /dev/null)"
@@ -100,7 +100,7 @@ function _ci_status_async() {
         foreground="%{$fg[gray]%}"
     fi
 
-    echo "${repo_root}@${repo_branch}"
+    echo "${repo_root}@${repo_commit}"
     echo $state
     echo $symbol
     echo $foreground
@@ -138,12 +138,12 @@ function prompt_ci_status() {
     local repo_root="$(git rev-parse --show-toplevel 2> /dev/null)"
     [[ $? != 0 || -z $repo_root ]] && return
 
-    local repo_branch="$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
-    [[ $? != 0 || -z $repo_branch ]] && return
+    local repo_commit="$(git rev-parse --short HEAD 2> /dev/null)"
+    [[ $? != 0 || -z $repo_commit ]] && return
 
-    _ci_status_compute $repo_root $repo_branch
+    _ci_status_compute $repo_root $repo_commit
 
-    _p9k_ci_status_cache_key="${repo_root}@${repo_branch}"
+    _p9k_ci_status_cache_key="${repo_root}@${repo_commit}"
 
     p10k segment -e -c '$_P9K_CI_STATUS_SYMBOL[$_p9k_ci_status_cache_key]' -t '$_P9K_CI_STATUS_SYMBOL[$_p9k_ci_status_cache_key]'
 }
