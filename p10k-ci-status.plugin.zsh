@@ -117,8 +117,7 @@ function _ci_status_callback() {
     _P9K_CI_STATUS_STATE[$cache_key]=$state
     _P9K_CI_STATUS_SYMBOL[$cache_key]="$foreground$symbol"
 
-    zle reset-prompt
-    zle -R
+    p10k display -r
 }
 
 typeset -g -A _P9K_CI_STATUS_STATE
