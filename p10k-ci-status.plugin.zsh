@@ -126,8 +126,8 @@ function _ci_status_callback() {
 
 typeset -gA _p9k_ci_status_state
 typeset -gA _p9k_ci_status_symbol
-typeset -g _p9k_ci_status_cache_key
 typeset -gF _p9k_ci_status_next_time=0
+typeset -g _p9k_ci_status_cache_key
 
 async_init
 async_stop_worker _p10k_ci_status_worker
