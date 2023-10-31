@@ -31,13 +31,17 @@ function _ci_status_async() {
     local repo_commit="$2"
     local upstream='0'
 
-    hub_output="$(cd $repo_root; hub ci-status 2> /dev/null)"
+    hub_output="$(hub ci-status 2> /dev/null)"
     hub_exit_code=$?
 
-    if [[ $hub_output == "no status" && $hub_exit_code == 3 ]]; then
-        hub_output="$(cd $repo_root; hub ci-status $(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null))"
-        hub_exit_code=$?
-        upstream='1'
+    if [[ $hub_exit_code == 3 && $hub_output == "no status" ]]; then
+        local upstream_branch
+        upstream_branch="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2> /dev/null)"
+        if [[ $? == 0 && ! -z $upstream_branch ]]; then
+            hub_output="$(hub ci-status $upstream_branch 2> /dev/null)"
+            hub_exit_code=$?
+            upstream='1'
+        fi
     fi
 
     state=UNKNOWN
