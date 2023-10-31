@@ -19,11 +19,11 @@
 function _ci_status_compute() {
     # Check if it is time to call the background task
     local cache_key=$1
-    (( EPOCHREALTIME >= _ci_status_next_time )) || return
+    (( EPOCHREALTIME >= _p9k_ci_status_next_time )) || return
     # Start background task
     async_job _p10k_ci_status_worker _ci_status_async $cache_key
     # Set time for next execution
-    _ci_status_next_time=$((EPOCHREALTIME + 10))
+    _p9k_ci_status_next_time=$((EPOCHREALTIME + 10))
 }
 
 function _ci_status_async() {
@@ -118,16 +118,16 @@ function _ci_status_callback() {
     local symbol=$return_values[3]
     local foreground=$return_values[4]
 
-    _P9K_CI_STATUS_STATE[$cache_key]=$state
-    _P9K_CI_STATUS_SYMBOL[$cache_key]="$foreground$symbol"
+    _p9k_ci_status_state[$cache_key]=$state
+    _p9k_ci_status_symbol[$cache_key]="$foreground$symbol"
 
     p10k display -r
 }
 
-typeset -g -A _P9K_CI_STATUS_STATE
-typeset -g -A _P9K_CI_STATUS_SYMBOL
+typeset -gA _p9k_ci_status_state
+typeset -gA _p9k_ci_status_symbol
 typeset -g _p9k_ci_status_cache_key
-typeset -gF _ci_status_next_time=0
+typeset -gF _p9k_ci_status_next_time=0
 
 async_init
 async_stop_worker _p10k_ci_status_worker
@@ -147,10 +147,10 @@ function prompt_ci_status() {
     local new_cache_key="${repo_root}@${repo_commit}"
     if [[ $_p9k_ci_status_cache_key != $new_cache_key ]]; then
         _p9k_ci_status_cache_key=$new_cache_key
-        _ci_status_next_time=0
+        _p9k_ci_status_next_time=0
     fi
 
     _ci_status_compute $_p9k_ci_status_cache_key
 
-    p10k segment -e -c '$_P9K_CI_STATUS_SYMBOL[$_p9k_ci_status_cache_key]' -t '$_P9K_CI_STATUS_SYMBOL[$_p9k_ci_status_cache_key]'
+    p10k segment -e -c '$_p9k_ci_status_symbol[$_p9k_ci_status_cache_key]' -t '$_p9k_ci_status_symbol[$_p9k_ci_status_cache_key]'
 }
