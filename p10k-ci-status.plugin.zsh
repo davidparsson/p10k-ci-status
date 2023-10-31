@@ -4,7 +4,7 @@
 #   - [ ] Support all states
 #   - [x] Update the prompt once the async job is completed
 #   - [x] Proper caching per repo & branch
-#     - [ ] Check commit instead of branch?
+#     - [x] Check commit instead of branch?
 # - [x] Fall-back: hub ci-status $(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
 #   - [ ] Better colors - does Warp have another theme?
 # - [ ] Allow configuration. Probably done with states and colors.
@@ -13,7 +13,7 @@
 #   - [x] Add a timeout to not check to often
 #   - [ ] Only update when state changes
 #   - [ ] Prevent memory leaks in arrays
-#   - [ ] Check how concurrency works for async. Will runs be restarted if they are already running?
+#   - [ ] Check how concurrency works for async. Will runs be restarted if they are already running? Check worker parameters!
 #
 
 function _ci_status_compute() {
