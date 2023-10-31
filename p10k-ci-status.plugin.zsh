@@ -18,17 +18,17 @@
 
 function _ci_status_compute() {
     # Check if it is time to call the background task
+    local cache_key=$1
     (( EPOCHREALTIME >= _ci_status_next_time )) || return
     # Start background task
-    async_job _p10k_ci_status_worker _ci_status_async $@
+    async_job _p10k_ci_status_worker _ci_status_async $cache_key
     # Set time for next execution
     _ci_status_next_time=$((EPOCHREALTIME + 10))
 }
 
 function _ci_status_async() {
     local hub_output hub_exit_code state
-    local repo_root="$1"
-    local repo_commit="$2"
+    local cache_key=$1
     local upstream='0'
 
     hub_output="$(hub ci-status 2> /dev/null)"
@@ -104,7 +104,7 @@ function _ci_status_async() {
         foreground="%{$fg[gray]%}"
     fi
 
-    echo "${repo_root}@${repo_commit}"
+    echo $cache_key
     echo $state
     echo $symbol
     echo $foreground
@@ -144,9 +144,13 @@ function prompt_ci_status() {
     local repo_commit="$(git rev-parse --short HEAD 2> /dev/null)"
     [[ $? != 0 || -z $repo_commit ]] && return
 
-    _ci_status_compute $repo_root $repo_commit
+    local new_cache_key="${repo_root}@${repo_commit}"
+    if [[ $_p9k_ci_status_cache_key != $new_cache_key ]]; then
+        _p9k_ci_status_cache_key=$new_cache_key
+        _ci_status_next_time=0
+    fi
 
-    _p9k_ci_status_cache_key="${repo_root}@${repo_commit}"
+    _ci_status_compute $_p9k_ci_status_cache_key
 
     p10k segment -e -c '$_P9K_CI_STATUS_SYMBOL[$_p9k_ci_status_cache_key]' -t '$_P9K_CI_STATUS_SYMBOL[$_p9k_ci_status_cache_key]'
 }
