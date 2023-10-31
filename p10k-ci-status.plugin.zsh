@@ -11,7 +11,7 @@
 # - [ ] Add a readme
 # - [ ] Optimizations:
 #   - [x] Add a timeout to not check to often
-#   - [ ] Only update when state changes
+#   - [x] Only update when state changes
 #   - [ ] Prevent memory leaks in arrays
 #   - [ ] Check how concurrency works for async. Will runs be restarted if they are already running? Check worker parameters!
 #
@@ -102,6 +102,7 @@ function _ci_status_async() {
 
     if [[ $upstream == '1' ]]; then
         foreground="%{$fg[gray]%}"
+        state="UPSTREAM_${state}"
     fi
 
     echo $cache_key
@@ -118,10 +119,12 @@ function _ci_status_callback() {
     local symbol=$return_values[3]
     local foreground=$return_values[4]
 
-    _p9k_ci_status_state[$cache_key]=$state
-    _p9k_ci_status_symbol[$cache_key]="$foreground$symbol"
+    if [[ $_p9k_ci_status_state[$cache_key] != $state ]]; then
+        _p9k_ci_status_state[$cache_key]=$state
+        _p9k_ci_status_symbol[$cache_key]="$foreground$symbol"
 
-    p10k display -r
+        p10k display -r
+    fi
 }
 
 typeset -gA _p9k_ci_status_state
