@@ -17,12 +17,11 @@
 #
 
 function _ci_status_compute() {
-    # Check if it is time to call the background task
     local cache_key=$1
     (( EPOCHREALTIME >= _p9k_ci_status_next_time )) || return
-    # Start background task
+
     async_job _p10k_ci_status_worker _ci_status_async $cache_key
-    # Set time for next execution
+
     _p9k_ci_status_next_time=$((EPOCHREALTIME + 10))
 }
 
