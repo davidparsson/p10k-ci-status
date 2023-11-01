@@ -1,13 +1,13 @@
 #!/usr/bin/env zsh
 # TODO:
 # - [x] Asynchronous execution
-#   - [ ] Support all states
+#   - [x] Support all states
 #   - [x] Update the prompt once the async job is completed
 #   - [x] Proper caching per repo & branch
 #     - [x] Check commit instead of branch?
 # - [x] Fall-back: hub ci-status $(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
 #   - [ ] Better colors - does Warp have another theme?
-# - [ ] Allow configuration. Probably done with states and colors.
+# - [x] Allow configuration. Probably done with states and colors.
 # - [ ] Add a readme
 # - [ ] Optimizations:
 #   - [x] Add a timeout to not check to often
@@ -28,7 +28,7 @@ function _ci_status_compute() {
 function _ci_status_async() {
     local hub_output hub_exit_code state
     local cache_key=$1
-    local upstream='0'
+    local upstream_prefix=''
 
     hub_output="$(hub ci-status 2> /dev/null)"
     hub_exit_code=$?
@@ -39,7 +39,7 @@ function _ci_status_async() {
         if [[ $? == 0 && ! -z $upstream_branch ]]; then
             hub_output="$(hub ci-status $upstream_branch 2> /dev/null)"
             hub_exit_code=$?
-            upstream='1'
+            upstream_prefix='UPSTREAM_'
         fi
     fi
 
@@ -71,43 +71,8 @@ function _ci_status_async() {
             ;;
     esac
 
-    local symbol foreground
-    case $state in
-        "SUCCESS")
-            symbol='✔︎'
-            foreground="%{$fg[green]%}"
-            ;;
-        "FAILURE")
-            symbol='✖︎'
-            foreground="%{$fg[red]%}"
-            ;;
-        "BUILDING")
-            symbol='•'
-            foreground="%{$fg[yellow]%}"
-            ;;
-        "ACTION_REQUIRED")
-            symbol='▴'
-            foreground="%{$fg[red]%}"
-            ;;
-        "CANCELLED")
-            symbol='✖︎'
-            foreground="%{$fg[yellow]%}"
-            ;;
-        "NEUTRAL")
-            symbol='✔︎'
-            foreground="%{$fg[cyan]%}"
-            ;;
-    esac
-
-    if [[ $upstream == '1' ]]; then
-        foreground="%{$fg[gray]%}"
-        state="UPSTREAM_${state}"
-    fi
-
     echo $cache_key
-    echo $state
-    echo $symbol
-    echo $foreground
+    echo $upstream_prefix$state
 }
 
 function _ci_status_callback() {
@@ -115,19 +80,15 @@ function _ci_status_callback() {
 
     local cache_key=$return_values[1]
     local state=$return_values[2]
-    local symbol=$return_values[3]
-    local foreground=$return_values[4]
+
 
     if [[ $_p9k_ci_status_state[$cache_key] != $state ]]; then
         _p9k_ci_status_state[$cache_key]=$state
-        _p9k_ci_status_symbol[$cache_key]="$foreground$symbol"
-
         p10k display -r
     fi
 }
 
 typeset -gA _p9k_ci_status_state
-typeset -gA _p9k_ci_status_symbol
 typeset -gF _p9k_ci_status_next_time=0
 typeset -g _p9k_ci_status_cache_key
 
@@ -136,6 +97,11 @@ async_stop_worker _p10k_ci_status_worker
 async_start_worker _p10k_ci_status_worker -n
 async_unregister_callback _p10k_ci_status_worker
 async_register_callback _p10k_ci_status_worker _ci_status_callback
+
+function _ci_status_create_segment() {
+    local state=$1 color=$2 text=$3
+    p10k segment -s $state -c '${(M)_p9k_ci_status_state[$_p9k_ci_status_cache_key]:#'$state'}' -f $color -et $text
+}
 
 function prompt_ci_status() {
     (( $+commands[hub] )) || return
@@ -154,5 +120,19 @@ function prompt_ci_status() {
 
     _ci_status_compute $_p9k_ci_status_cache_key
 
-    p10k segment -e -c '$_p9k_ci_status_symbol[$_p9k_ci_status_cache_key]' -t '$_p9k_ci_status_symbol[$_p9k_ci_status_cache_key]'
+    local checkmark='✔︎' bullet='•' cross='✖︎' triangle='▴'
+
+    _ci_status_create_segment SUCCESS green $checkmark
+    _ci_status_create_segment BUILDING yellow $bullet
+    _ci_status_create_segment FAILURE red $cross
+    _ci_status_create_segment CANCELLED yellow $cross
+    _ci_status_create_segment ACTION_REQUIRED red $triangle
+    _ci_status_create_segment NEUTRAL cyan $checkmark
+
+    _ci_status_create_segment UPSTREAM_SUCCESS gray $checkmark
+    _ci_status_create_segment UPSTREAM_BUILDING gray $bullet
+    _ci_status_create_segment UPSTREAM_FAILURE gray $cross
+    _ci_status_create_segment UPSTREAM_CANCELLED gray $cross
+    _ci_status_create_segment UPSTREAM_ACTION_REQUIRED gray $triangle
+    _ci_status_create_segment UPSTREAM_NEUTRAL gray $checkmark
 }
