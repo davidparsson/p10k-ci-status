@@ -129,10 +129,10 @@ function prompt_ci_status() {
     _ci_status_create_segment ACTION_REQUIRED red $triangle
     _ci_status_create_segment NEUTRAL cyan $checkmark
 
-    _ci_status_create_segment UPSTREAM_SUCCESS gray $checkmark
-    _ci_status_create_segment UPSTREAM_BUILDING gray $bullet
-    _ci_status_create_segment UPSTREAM_FAILURE gray $cross
-    _ci_status_create_segment UPSTREAM_CANCELLED gray $cross
-    _ci_status_create_segment UPSTREAM_ACTION_REQUIRED gray $triangle
-    _ci_status_create_segment UPSTREAM_NEUTRAL gray $checkmark
+    _ci_status_create_segment UPSTREAM_SUCCESS grey $checkmark
+    _ci_status_create_segment UPSTREAM_BUILDING grey $bullet
+    _ci_status_create_segment UPSTREAM_FAILURE grey $cross
+    _ci_status_create_segment UPSTREAM_CANCELLED grey $cross
+    _ci_status_create_segment UPSTREAM_ACTION_REQUIRED grey $triangle
+    _ci_status_create_segment UPSTREAM_NEUTRAL grey $checkmark
 }
