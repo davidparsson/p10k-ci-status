@@ -22,7 +22,7 @@ function _ci_status_compute() {
 
     async_job _p10k_ci_status_worker _ci_status_async $cache_key
 
-    _p9k_ci_status_next_time=$((EPOCHREALTIME + 10))
+    _p9k_ci_status_next_time=$((EPOCHREALTIME + 5))
 }
 
 function _ci_status_async() {
