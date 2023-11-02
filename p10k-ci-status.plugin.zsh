@@ -17,18 +17,21 @@
 #
 
 function _ci_status_compute() {
-    local cache_key=$1
+    local repo_root=$1 cache_key=$2
     (( EPOCHREALTIME >= _p9k_ci_status_next_time )) || return
 
-    async_job _p10k_ci_status_worker _ci_status_async $cache_key
+    async_job _p10k_ci_status_worker _ci_status_async $repo_root $cache_key
 
     _p9k_ci_status_next_time=$((EPOCHREALTIME + 5))
 }
 
 function _ci_status_async() {
     local hub_output hub_exit_code state
-    local cache_key=$1
+    local repo_root=$1
+    local cache_key=$2
     local upstream_prefix=''
+
+    pushd $repo_root > /dev/null
 
     hub_output="$(hub ci-status 2> /dev/null)"
     hub_exit_code=$?
@@ -42,6 +45,8 @@ function _ci_status_async() {
             upstream_prefix='UPSTREAM_'
         fi
     fi
+
+    popd > /dev/null
 
     state=UNKNOWN
     case $hub_exit_code in
@@ -118,7 +123,7 @@ function prompt_ci_status() {
         _p9k_ci_status_next_time=0
     fi
 
-    _ci_status_compute $_p9k_ci_status_cache_key
+    _ci_status_compute $repo_root $_p9k_ci_status_cache_key
 
     local checkmark='✔︎' bullet='•' cross='✖︎' triangle='▴'
 
