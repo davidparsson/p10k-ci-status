@@ -22,7 +22,7 @@ function _ci_status_compute() {
 
     async_job _p10k_ci_status_worker _ci_status_async $repo_root $cache_key
 
-    _p9k_ci_status_next_time=$((EPOCHREALTIME + 5))
+    _p9k_ci_status_next_time=$((EPOCHREALTIME + 10))
 }
 
 function _ci_status_async() {
@@ -91,6 +91,8 @@ function _ci_status_callback() {
         _p9k_ci_status_state[$cache_key]=$state
         p10k display -r
     fi
+
+    _p9k_ci_status_next_time=$((EPOCHREALTIME + 5))
 }
 
 typeset -gA _p9k_ci_status_state
