@@ -13,6 +13,7 @@
 #   - [x] Add a timeout to not check to often
 #   - [x] Only update when state changes
 #   - [ ] Prevent memory leaks in arrays
+#   - [ ] Perform git root-dir and commit check asynchronously? (Takes 0.009 s.)
 #   - [ ] Check how concurrency works for async. Will runs be restarted if they are already running? Check worker parameters!
 #
 
