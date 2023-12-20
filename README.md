@@ -18,9 +18,11 @@ below it is added last to `POWERLEVEL9K_LEFT_PROMPT_ELEMENTS`.
 
 ## What it does
 
-It provides a symbol for the status of the current branch, below seen as the green checkmark:
+It provides a symbol for the status of the current branch, below seen as the green checkmark
+or red cross:
 
-<img width="482" alt="A prompt with a green checkmark" src="https://github.com/davidparsson/p10k-ci-status/assets/325325/7922a106-ec65-4655-8954-eb4e624417cf">
+<img width="482" alt="A prompt with a green checkmark" src="https://github.com/davidparsson/p10k-ci-status/assets/325325/0ad58da2-44ba-425b-a75d-8f73e6aea182">
+<img width="482" alt="A prompt with a red cross" src="https://github.com/davidparsson/p10k-ci-status/assets/325325/e2b21b80-58aa-43c4-bdb8-bf8f60f2fcd2">
 
 The available statuses are:
 - `SUCCESS`: A green checkmark
