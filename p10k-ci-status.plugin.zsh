@@ -5,6 +5,7 @@
 #   - [x] Update the prompt once the async job is completed
 #   - [x] Proper caching per repo & branch
 #     - [x] Check commit instead of branch?
+# - [x] Prefer gh cli over hub
 # - [x] Fall-back: hub ci-status $(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
 #   - [ ] Better colors - does Warp have another theme?
 # - [x] Allow configuration. Probably done with states and colors.
@@ -27,6 +28,88 @@ function _ci_status_compute() {
 }
 
 function _ci_status_async() {
+    local repo_root=$1
+    local cache_key=$2
+
+    if (( $+commands[gh] )); then
+        _ci_status_using_gh $cache_key
+    elif (( $+commands[hub] )); then
+        _ci_status_using_hub $repo_root $cache_key
+    else
+        echo $cache_key
+        echo UNAVAILABLE
+    fi
+}
+
+function _ci_status_gh_api_call() {
+    local repo=$1
+    local commit=$2
+
+    gh api -H 'Accept: application/vnd.github+json' \
+        -H 'X-GitHub-Api-Version: 2022-11-28' \
+        /repos/$repo/commits/$commit/check-runs --paginate 2> /dev/null
+}
+
+function _ci_status_using_gh() {
+    local gh_output gh_exit_code state
+    local cache_key=$1
+    local upstream_prefix=''
+    local repo="$(gh repo view --json nameWithOwner -q .nameWithOwner 2> /dev/null)"
+
+    if [[ -z $repo ]]; then
+        echo $cache_key
+        echo UNAVAILABLE
+        return
+    fi
+
+    state=NEUTRAL
+    local local_commit=$(git rev-parse HEAD 2> /dev/null)
+    gh_output="$(_ci_status_gh_api_call $repo $local_commit)"
+    gh_exit_code=$?
+
+    if [[ $gh_exit_code == 1 ]]; then
+        local upstream_commit="$(git rev-parse @{u} 2> /dev/null)"
+        if [[ $? == 0 && ! -z $upstream_commit ]]; then
+            gh_output="$(_ci_status_gh_api_call $repo $upstream_commit)"
+            gh_exit_code=$?
+            upstream_prefix='UPSTREAM_'
+        fi
+    fi
+
+    state=UNKNOWN
+    if [[ $gh_exit_code == 0 ]]; then
+        local run_conclusions="$(echo $gh_output \
+            | jq -r '.check_runs[] | select(.status=="completed") | .conclusion' \
+            | sort | uniq
+        )"
+
+        local run_statuses="$(echo $gh_output \
+            | jq -r '.check_runs[] | .status' \
+            | sort | uniq
+        )"
+
+        if [[ $run_conclusions =~ "action_required" ]]; then
+            state=ACTION_REQUIRED
+        elif [[ $run_conclusions =~ "failure" ]]; then
+            state=FAILURE
+        elif [[ $run_conclusions =~ "cancelled" || $run_conclusions =~ "timed_out" ]]; then
+            state=CANCELLED
+        elif [[ $run_statuses != "" && $run_statuses != "completed" ]]; then
+            state=BUILDING
+        elif [[ $run_conclusions =~ "neutral" ]]; then
+            state=NEUTRAL
+        elif [[ $run_conclusions =~ "success" ]]; then
+            state=SUCCESS
+        fi
+    else
+        state=UNAVAILABLE
+    fi
+
+    echo $cache_key
+    echo $upstream_prefix$state
+}
+
+function _ci_status_using_hub() {
     local hub_output hub_exit_code state
     local repo_root=$1
     local cache_key=$2
@@ -112,7 +195,7 @@ function _ci_status_create_segment() {
 }
 
 function prompt_ci_status() {
-    (( $+commands[hub] )) || return
+    (( $+commands[gh] )) || (( $+commands[hub] )) || return
 
     local repo_root="$(git rev-parse --show-toplevel 2> /dev/null)"
     [[ $? != 0 || -z $repo_root ]] && return
