@@ -32,7 +32,7 @@ function _ci_status_async() {
     local cache_key=$2
 
     if (( $+commands[gh] )); then
-        _ci_status_using_gh $cache_key
+        _ci_status_using_gh $repo_root $cache_key
     elif (( $+commands[hub] )); then
         _ci_status_using_hub $repo_root $cache_key
     else
@@ -52,25 +52,33 @@ function _ci_status_gh_api_call() {
 
 function _ci_status_using_gh() {
     local gh_output gh_exit_code state
-    local cache_key=$1
+    local repo_root=$1
+    local cache_key=$2
     local upstream_prefix=''
-    local repo="$(gh repo view --json nameWithOwner -q .nameWithOwner 2> /dev/null)"
+    local github_repo_path
 
-    if [[ -z $repo ]]; then
-        echo $cache_key
-        echo UNAVAILABLE
-        return
+    if [[ -n ${_p9k_ci_status_github_repo_paths[$repo_root]} ]]; then
+        github_repo_path=${_p9k_ci_status_github_repo_paths[$repo_root]}
+    else
+        github_repo_path="$(gh repo view --json nameWithOwner -q .nameWithOwner 2> /dev/null)"
+        if [[ -n $github_repo_path ]]; then
+            _p9k_ci_status_github_repo_paths[$repo_root]=$github_repo_path
+        else
+            echo $cache_key
+            echo UNAVAILABLE
+            return
+        fi
     fi
 
     state=NEUTRAL
     local local_commit=$(git rev-parse HEAD 2> /dev/null)
-    gh_output="$(_ci_status_gh_api_call $repo $local_commit)"
+    gh_output="$(_ci_status_gh_api_call $github_repo_path $local_commit)"
     gh_exit_code=$?
 
     if [[ $gh_exit_code == 1 ]]; then
         local upstream_commit="$(git rev-parse @{u} 2> /dev/null)"
         if [[ $? == 0 && ! -z $upstream_commit ]]; then
-            gh_output="$(_ci_status_gh_api_call $repo $upstream_commit)"
+            gh_output="$(_ci_status_gh_api_call $github_repo_path $upstream_commit)"
             gh_exit_code=$?
             upstream_prefix='UPSTREAM_'
         fi
@@ -180,6 +188,7 @@ function _ci_status_callback() {
 }
 
 typeset -gA _p9k_ci_status_state
+typeset -gA _p9k_ci_status_github_repo_paths
 typeset -gF _p9k_ci_status_next_time=0
 typeset -g _p9k_ci_status_cache_key
 
