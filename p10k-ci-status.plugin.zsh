@@ -110,6 +110,8 @@ function _ci_status_using_gh() {
             state=NEUTRAL
         elif [[ $run_conclusions =~ "success" ]]; then
             state=SUCCESS
+        elif [[ $run_conclusions =~ "skipped" ]]; then
+            state=SKIPPED
         fi
     else
         state=UNAVAILABLE
@@ -222,7 +224,7 @@ function prompt_ci_status() {
 
     _ci_status_compute $repo_root $_p9k_ci_status_cache_key
 
-    local checkmark='✔︎' bullet='•' cross='✖︎' triangle='▴'
+    local checkmark='✔︎' bullet='•' cross='✖︎' triangle='▴' dash='—'
 
     _ci_status_create_segment SUCCESS green $checkmark
     _ci_status_create_segment BUILDING yellow $bullet
@@ -230,6 +232,7 @@ function prompt_ci_status() {
     _ci_status_create_segment CANCELLED yellow $cross
     _ci_status_create_segment ACTION_REQUIRED red $triangle
     _ci_status_create_segment NEUTRAL cyan $checkmark
+    _ci_status_create_segment SKIPPED grey $dash
 
     _ci_status_create_segment UPSTREAM_SUCCESS grey $checkmark
     _ci_status_create_segment UPSTREAM_BUILDING grey $bullet
@@ -237,4 +240,5 @@ function prompt_ci_status() {
     _ci_status_create_segment UPSTREAM_CANCELLED grey $cross
     _ci_status_create_segment UPSTREAM_ACTION_REQUIRED grey $triangle
     _ci_status_create_segment UPSTREAM_NEUTRAL grey $checkmark
+    _ci_status_create_segment UPSTREAM_SKIPPED grey $dash
 }

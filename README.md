@@ -31,6 +31,7 @@ The available statuses are:
 - `CANCELLED`: A yellow cross
 - `ACTION_REQUIRED`: A red triangle
 - `NEUTRAL`: A cyan checkmark
+- `SKIPPED`: A grey dash
 
 If there is no status for the local branch head, the upstream/remote branch head is used. In that
 case the same symbol is used, but the color is grey. The upstream statuses are:
@@ -40,3 +41,4 @@ case the same symbol is used, but the color is grey. The upstream statuses are:
 - `UPSTREAM_CANCELLED`
 - `UPSTREAM_ACTION_REQUIRED`
 - `UPSTREAM_NEUTRAL`
+- `UPSTREAM_SKIPPED`
