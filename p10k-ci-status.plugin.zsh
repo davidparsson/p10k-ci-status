@@ -57,7 +57,7 @@ function _p10k_ci_status_using_gh() {
     local upstream_prefix=''
     local github_repo_path
 
-    pushd $repo_root > /dev/null
+    cd $repo_root
 
     if [[ -n ${_p10k_ci_status_github_repo_paths[$repo_root]} ]]; then
         github_repo_path=${_p10k_ci_status_github_repo_paths[$repo_root]}
@@ -87,8 +87,6 @@ function _p10k_ci_status_using_gh() {
             upstream_prefix='UPSTREAM_'
         fi
     fi
-
-    popd > /dev/null
 
     state=UNKNOWN
     if [[ $gh_exit_code == 0 ]]; then
@@ -131,7 +129,7 @@ function _p10k_ci_status_using_hub() {
     local cache_key=$2
     local upstream_prefix=''
 
-    pushd $repo_root > /dev/null
+    cd $repo_root
 
     hub_output="$(hub ci-status 2> /dev/null)"
     hub_exit_code=$?
@@ -145,8 +143,6 @@ function _p10k_ci_status_using_hub() {
             upstream_prefix='UPSTREAM_'
         fi
     fi
-
-    popd > /dev/null
 
     state=UNKNOWN
     case $hub_exit_code in
