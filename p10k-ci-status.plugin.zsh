@@ -18,30 +18,30 @@
 #   - [ ] Check how concurrency works for async. Will runs be restarted if they are already running? Check worker parameters!
 #
 
-function _ci_status_compute() {
+function _p10k_ci_status_compute() {
     local repo_root=$1 cache_key=$2
     (( EPOCHREALTIME >= _p10k_ci_status_next_time )) || return
 
-    async_job _p10k_ci_status_worker _ci_status_async $repo_root $cache_key
+    async_job _p10k_ci_status_worker _p10k_ci_status_async $repo_root $cache_key
 
     _p10k_ci_status_next_time=$((EPOCHREALTIME + 10))
 }
 
-function _ci_status_async() {
+function _p10k_ci_status_async() {
     local repo_root=$1
     local cache_key=$2
 
     if (( $+commands[gh] )); then
-        _ci_status_using_gh $repo_root $cache_key
+        _p10k_ci_status_using_gh $repo_root $cache_key
     elif (( $+commands[hub] )); then
-        _ci_status_using_hub $repo_root $cache_key
+        _p10k_ci_status_using_hub $repo_root $cache_key
     else
         echo $cache_key
         echo UNAVAILABLE
     fi
 }
 
-function _ci_status_gh_api_call() {
+function _p10k_ci_status_gh_api_call() {
     local repo=$1
     local commit=$2
 
@@ -50,7 +50,7 @@ function _ci_status_gh_api_call() {
         /repos/$repo/commits/$commit/check-runs --paginate 2> /dev/null
 }
 
-function _ci_status_using_gh() {
+function _p10k_ci_status_using_gh() {
     local gh_output gh_exit_code state
     local repo_root=$1
     local cache_key=$2
@@ -72,7 +72,7 @@ function _ci_status_using_gh() {
 
     state=NEUTRAL
     local local_commit=$(git rev-parse HEAD 2> /dev/null)
-    gh_output="$(_ci_status_gh_api_call $github_repo_path $local_commit)"
+    gh_output="$(_p10k_ci_status_gh_api_call $github_repo_path $local_commit)"
     gh_exit_code=$?
 
     local total_count=$(echo $gh_output | jq -r '.total_count')
@@ -80,7 +80,7 @@ function _ci_status_using_gh() {
     if [[ $gh_exit_code == 1 || $total_count == 0 ]]; then
         local upstream_commit="$(git rev-parse @{u} 2> /dev/null)"
         if [[ $? == 0 && ! -z $upstream_commit ]]; then
-            gh_output="$(_ci_status_gh_api_call $github_repo_path $upstream_commit)"
+            gh_output="$(_p10k_ci_status_gh_api_call $github_repo_path $upstream_commit)"
             gh_exit_code=$?
             upstream_prefix='UPSTREAM_'
         fi
@@ -121,7 +121,7 @@ function _ci_status_using_gh() {
     echo $upstream_prefix$state
 }
 
-function _ci_status_using_hub() {
+function _p10k_ci_status_using_hub() {
     local hub_output hub_exit_code state
     local repo_root=$1
     local cache_key=$2
@@ -176,7 +176,7 @@ function _ci_status_using_hub() {
     echo $upstream_prefix$state
 }
 
-function _ci_status_callback() {
+function _p10k_ci_status_callback() {
     local return_values=(${(f)3})
 
     local cache_key=$return_values[1]
@@ -200,9 +200,9 @@ async_init
 async_stop_worker _p10k_ci_status_worker
 async_start_worker _p10k_ci_status_worker -n
 async_unregister_callback _p10k_ci_status_worker
-async_register_callback _p10k_ci_status_worker _ci_status_callback
+async_register_callback _p10k_ci_status_worker _p10k_ci_status_callback
 
-function _ci_status_create_segment() {
+function _p10k_ci_status_create_segment() {
     local state=$1 color=$2 text=$3
     p10k segment -s $state -c '${(M)_p10k_ci_status_state[$_p10k_ci_status_cache_key]:#'$state'}' -f $color -et $text
 }
@@ -222,23 +222,23 @@ function prompt_ci_status() {
         _p10k_ci_status_next_time=0
     fi
 
-    _ci_status_compute $repo_root $_p10k_ci_status_cache_key
+    _p10k_ci_status_compute $repo_root $_p10k_ci_status_cache_key
 
     local checkmark='✔︎' bullet='•' cross='✖︎' triangle='▴' dash='—'
 
-    _ci_status_create_segment SUCCESS green $checkmark
-    _ci_status_create_segment BUILDING yellow $bullet
-    _ci_status_create_segment FAILURE red $cross
-    _ci_status_create_segment CANCELLED yellow $cross
-    _ci_status_create_segment ACTION_REQUIRED red $triangle
-    _ci_status_create_segment NEUTRAL cyan $checkmark
-    _ci_status_create_segment SKIPPED grey $dash
+    _p10k_ci_status_create_segment SUCCESS green $checkmark
+    _p10k_ci_status_create_segment BUILDING yellow $bullet
+    _p10k_ci_status_create_segment FAILURE red $cross
+    _p10k_ci_status_create_segment CANCELLED yellow $cross
+    _p10k_ci_status_create_segment ACTION_REQUIRED red $triangle
+    _p10k_ci_status_create_segment NEUTRAL cyan $checkmark
+    _p10k_ci_status_create_segment SKIPPED grey $dash
 
-    _ci_status_create_segment UPSTREAM_SUCCESS grey $checkmark
-    _ci_status_create_segment UPSTREAM_BUILDING grey $bullet
-    _ci_status_create_segment UPSTREAM_FAILURE grey $cross
-    _ci_status_create_segment UPSTREAM_CANCELLED grey $cross
-    _ci_status_create_segment UPSTREAM_ACTION_REQUIRED grey $triangle
-    _ci_status_create_segment UPSTREAM_NEUTRAL grey $checkmark
-    _ci_status_create_segment UPSTREAM_SKIPPED grey $dash
+    _p10k_ci_status_create_segment UPSTREAM_SUCCESS grey $checkmark
+    _p10k_ci_status_create_segment UPSTREAM_BUILDING grey $bullet
+    _p10k_ci_status_create_segment UPSTREAM_FAILURE grey $cross
+    _p10k_ci_status_create_segment UPSTREAM_CANCELLED grey $cross
+    _p10k_ci_status_create_segment UPSTREAM_ACTION_REQUIRED grey $triangle
+    _p10k_ci_status_create_segment UPSTREAM_NEUTRAL grey $checkmark
+    _p10k_ci_status_create_segment UPSTREAM_SKIPPED grey $dash
 }
