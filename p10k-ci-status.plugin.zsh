@@ -57,6 +57,8 @@ function _p10k_ci_status_using_gh() {
     local upstream_prefix=''
     local github_repo_path
 
+    pushd $repo_root > /dev/null
+
     if [[ -n ${_p10k_ci_status_github_repo_paths[$repo_root]} ]]; then
         github_repo_path=${_p10k_ci_status_github_repo_paths[$repo_root]}
     else
@@ -85,6 +87,8 @@ function _p10k_ci_status_using_gh() {
             upstream_prefix='UPSTREAM_'
         fi
     fi
+
+    popd > /dev/null
 
     state=UNKNOWN
     if [[ $gh_exit_code == 0 ]]; then
