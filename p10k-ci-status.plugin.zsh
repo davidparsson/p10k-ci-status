@@ -20,11 +20,11 @@
 
 function _ci_status_compute() {
     local repo_root=$1 cache_key=$2
-    (( EPOCHREALTIME >= _p9k_ci_status_next_time )) || return
+    (( EPOCHREALTIME >= _p10k_ci_status_next_time )) || return
 
     async_job _p10k_ci_status_worker _ci_status_async $repo_root $cache_key
 
-    _p9k_ci_status_next_time=$((EPOCHREALTIME + 10))
+    _p10k_ci_status_next_time=$((EPOCHREALTIME + 10))
 }
 
 function _ci_status_async() {
@@ -57,12 +57,12 @@ function _ci_status_using_gh() {
     local upstream_prefix=''
     local github_repo_path
 
-    if [[ -n ${_p9k_ci_status_github_repo_paths[$repo_root]} ]]; then
-        github_repo_path=${_p9k_ci_status_github_repo_paths[$repo_root]}
+    if [[ -n ${_p10k_ci_status_github_repo_paths[$repo_root]} ]]; then
+        github_repo_path=${_p10k_ci_status_github_repo_paths[$repo_root]}
     else
         github_repo_path="$(gh repo view --json nameWithOwner -q .nameWithOwner 2> /dev/null)"
         if [[ -n $github_repo_path ]]; then
-            _p9k_ci_status_github_repo_paths[$repo_root]=$github_repo_path
+            _p10k_ci_status_github_repo_paths[$repo_root]=$github_repo_path
         else
             echo $cache_key
             echo UNAVAILABLE
@@ -183,18 +183,18 @@ function _ci_status_callback() {
     local state=$return_values[2]
 
 
-    if [[ $_p9k_ci_status_state[$cache_key] != $state ]]; then
-        _p9k_ci_status_state[$cache_key]=$state
+    if [[ $_p10k_ci_status_state[$cache_key] != $state ]]; then
+        _p10k_ci_status_state[$cache_key]=$state
         p10k display -r
     fi
 
-    _p9k_ci_status_next_time=$((EPOCHREALTIME + 5))
+    _p10k_ci_status_next_time=$((EPOCHREALTIME + 5))
 }
 
-typeset -gA _p9k_ci_status_state
-typeset -gA _p9k_ci_status_github_repo_paths
-typeset -gF _p9k_ci_status_next_time=0
-typeset -g _p9k_ci_status_cache_key
+typeset -gA _p10k_ci_status_state
+typeset -gA _p10k_ci_status_github_repo_paths
+typeset -gF _p10k_ci_status_next_time=0
+typeset -g _p10k_ci_status_cache_key
 
 async_init
 async_stop_worker _p10k_ci_status_worker
@@ -204,7 +204,7 @@ async_register_callback _p10k_ci_status_worker _ci_status_callback
 
 function _ci_status_create_segment() {
     local state=$1 color=$2 text=$3
-    p10k segment -s $state -c '${(M)_p9k_ci_status_state[$_p9k_ci_status_cache_key]:#'$state'}' -f $color -et $text
+    p10k segment -s $state -c '${(M)_p10k_ci_status_state[$_p10k_ci_status_cache_key]:#'$state'}' -f $color -et $text
 }
 
 function prompt_ci_status() {
@@ -217,12 +217,12 @@ function prompt_ci_status() {
     [[ $? != 0 || -z $repo_commit ]] && return
 
     local new_cache_key="${repo_root}@${repo_commit}"
-    if [[ $_p9k_ci_status_cache_key != $new_cache_key ]]; then
-        _p9k_ci_status_cache_key=$new_cache_key
-        _p9k_ci_status_next_time=0
+    if [[ $_p10k_ci_status_cache_key != $new_cache_key ]]; then
+        _p10k_ci_status_cache_key=$new_cache_key
+        _p10k_ci_status_next_time=0
     fi
 
-    _ci_status_compute $repo_root $_p9k_ci_status_cache_key
+    _ci_status_compute $repo_root $_p10k_ci_status_cache_key
 
     local checkmark='✔︎' bullet='•' cross='✖︎' triangle='▴' dash='—'
 
