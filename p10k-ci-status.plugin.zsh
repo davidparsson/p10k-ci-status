@@ -75,7 +75,9 @@ function _ci_status_using_gh() {
     gh_output="$(_ci_status_gh_api_call $github_repo_path $local_commit)"
     gh_exit_code=$?
 
-    if [[ $gh_exit_code == 1 ]]; then
+    local total_count=$(echo $gh_output | jq -r '.total_count')
+
+    if [[ $gh_exit_code == 1 || $total_count == 0 ]]; then
         local upstream_commit="$(git rev-parse @{u} 2> /dev/null)"
         if [[ $? == 0 && ! -z $upstream_commit ]]; then
             gh_output="$(_ci_status_gh_api_call $github_repo_path $upstream_commit)"
