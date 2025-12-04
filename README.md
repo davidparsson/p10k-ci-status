@@ -1,10 +1,10 @@
 # GitHub CI status for Powerlevel10k
 
-A segment for Powerlevel10k that indicates the GitHub's CI status for the current branch. 
+A segment for Powerlevel10k that indicates the GitHub's CI status for the current branch.
 
 ## Installation
 
-This depends on [hub](https://hub.github.com) to perform status checks, and 
+This depends on [hub](https://hub.github.com) to perform status checks, and
 [zsh-async](https://github.com/mafredri/zsh-async) to do this asynchronously. These
 dependencies need to be installed manually.
 
@@ -25,6 +25,7 @@ or red cross:
 <img width="482" alt="A prompt with a red cross" src="https://github.com/davidparsson/p10k-ci-status/assets/325325/e2b21b80-58aa-43c4-bdb8-bf8f60f2fcd2">
 
 The available statuses are:
+
 - `SUCCESS`: A green checkmark
 - `BUILDING`: A yellow bullet
 - `FAILURE`: A red cross
@@ -35,6 +36,7 @@ The available statuses are:
 
 If there is no status for the local branch head, the upstream/remote branch head is used. In that
 case the same symbol is used, but the color is grey. The upstream statuses are:
+
 - `UPSTREAM_SUCCESS`
 - `UPSTREAM_BUILDING`
 - `UPSTREAM_FAILURE`
