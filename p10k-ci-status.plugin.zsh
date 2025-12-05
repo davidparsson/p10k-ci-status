@@ -7,9 +7,8 @@
 #     - [x] Check commit instead of branch?
 # - [x] Prefer gh cli over hub
 # - [x] Fall-back: hub ci-status $(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
-#   - [ ] Better colors - does Warp have another theme?
 # - [x] Allow configuration. Probably done with states and colors.
-# - [ ] Add a readme
+# - [x] Add a readme
 # - [ ] Optimizations:
 #   - [x] Add a timeout to not check to often
 #   - [x] Only update when state changes
